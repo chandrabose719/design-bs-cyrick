@@ -5,10 +5,16 @@ $(document).ready(function(){
 
   // preload
   var preloader = document.getElementById("preloader-section");
+  let load = null;
   if (preloader) {
     window.addEventListener("load", function(){
+      load = true;
       preloader.style.display = "none";
+      $('html, body').css({'overflow': 'auto', 'height': 'auto'})
     });
+    if(load == null) {
+      $('html, body').css({'overflow': 'hidden', 'height': '100%'})
+    }  
   }  
 
   // header on scroll
@@ -163,37 +169,14 @@ function contactValidation(obj){
 };
 
 function createTable(obj){
-  var table = `
-    <table style='width:100%;border: 1px solid black;border-radius: 10px;'>
-      <tr>
-        <th style='border: 1px solid black;border-radius: 10px; padding: 5px 8px;'>Name</th>
-        <th style='border: 1px solid black;border-radius: 10px; padding: 5px 8px;'>Email</th>
-        <th style='border: 1px solid black;border-radius: 10px; padding: 5px 8px;'>Phone number</th>
-        <th style='border: 1px solid black;border-radius: 10px; padding: 5px 8px;'>Category</th>
-      </tr>
-      <tr>
-        <td style='border: 1px solid black;border-radius: 10px; padding: 5px 8px;text-align:center;'>
-        `+ obj.name +`
-        </td>
-        <td style='border: 1px solid black;border-radius: 10px; padding: 5px 8px;text-align:center;'>
-        `+ obj.email +`
-        </td>
-        <td style='border: 1px solid black;border-radius: 10px; padding: 5px 8px;text-align:center;'>
-        `+ obj.phone +`
-        </td>
-        <td style='border: 1px solid black;border-radius: 10px; padding: 5px 8px;text-align:center;'>
-        `+ obj.category +`
-        </td>
-      </tr>
-      <tr>
-        <th style='border: 1px solid black;border-radius: 10px; padding: 5px 8px;'>Message</th>
-        <td colspan="3" style='border: 1px solid black;border-radius: 10px; padding: 5px 8px;'>
-        `+ obj.message +`
-        </th>
-      </tr>
-    </table>
-  `;
-  return table;
+  var body = {
+    from_name: obj.name,
+    from_email: obj.email, 
+    phone: obj.phone,
+    category: obj.category,
+    message: obj.message
+  };
+  return body;
 };
 
 async function clientEnquiry(){
@@ -215,7 +198,7 @@ async function clientEnquiry(){
   if(validation == false){
     btnLoader(true);
     var body = createTable(obj);
-    await elasticEmail(obj, body, function(err, res){
+    await eMailJS(obj, body, function(err, res){
       if(res == "OK"){
         showToast("Success", "Your details forwarded to our admin!");
         resetClientEnquiry();
@@ -228,29 +211,48 @@ async function clientEnquiry(){
   }  
 };
 
-async function elasticEmail(obj, body, cb) {
-  let host = "smtp.elasticemail.com";
-  let uname = "cyrickcreation@gmail.com";
-  let pass = "4BF6E510CBE3B05A5C3C7E8A34BA744C8A17";
-  
-  let toEmail = uname;
-  let subject = "Cyrick Enquiry!";
-  
-  await Email.send({
-    Host: host,
-    Username: uname,
-    Password: pass,
-    To: toEmail,
-    Subject: subject,
-    From: uname,
-    Body: body,
-  })
-  .then(function(message){
-    console.log("email success res: ", message);
-    return cb(null, message);
-  })
-  .catch(function(err){
-    console.log("email err: ", err);
-    return cb(err);
+(function() {
+  emailjs.init('vXPKEjDBqnF-4G9qb');
+})();
+
+async function eMailJS(obj, body, cb) {
+  emailjs.send(
+    'service_5jowz89', 
+    'template_v2nq5dm',
+    body
+  )
+  .then(function() {
+    console.log("email success res: ", "OK");
+    return cb(null, "OK");
+  }, function(error) {
+    console.log("email err res: ", error);
+    return cb(error);
   });
 };
+
+// async function elasticEmail(obj, body, cb) {
+//   let host = "smtp.elasticemail.com";
+//   let uname = "cyrickcreation@gmail.com";
+//   let pass = "4BF6E510CBE3B05A5C3C7E8A34BA744C8A17";
+  
+//   let toEmail = uname;
+//   let subject = "Cyrick Enquiry!";
+  
+//   await Email.send({
+//     Host: host,
+//     Username: uname,
+//     Password: pass,
+//     To: toEmail,
+//     Subject: subject,
+//     From: uname,
+//     Body: body,
+//   })
+//   .then(function(message){
+//     console.log("email success res: ", message);
+//     return cb(null, message);
+//   })
+//   .catch(function(err){
+//     console.log("email err: ", err);
+//     return cb(err);
+//   });
+// };
